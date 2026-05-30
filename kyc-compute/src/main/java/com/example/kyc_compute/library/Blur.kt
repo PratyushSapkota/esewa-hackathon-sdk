@@ -20,6 +20,7 @@ fun computeBlurriness(sourceImage: Mat): Double {
     Imgproc.Laplacian(grayImage, laplacianImage, CvType.CV_64F, 3, 1.0, 0.0, Core.BORDER_DEFAULT)
 
     // 3. Calculate Variance
+    Core.meanStdDev(laplacianImage, meanMat, stdDevMat)
     val stdDev = stdDevMat.get(0, 0)[0]
     val variance = stdDev * stdDev
 

@@ -1,31 +1,52 @@
 package com.example.kyc_compute.library
 
 import org.opencv.core.Core
+import org.opencv.core.CvType
 import org.opencv.core.Mat
 import org.opencv.imgproc.Imgproc
 
-fun isGlare(imageMat: Mat, intensityThreshold: Int = 240, glare_area_ratio: Double = 0.015): Boolean {
-    val BWmat = Mat()
-    val binaryMask = Mat()
+fun isGlare(imageMat: Mat): Double {
+    val lookupTable = Mat(1, 256, CvType.CV_8U)
+    val grayMat = Mat()
+    val gammaCorrected = Mat()
+    val thresholded = Mat()
 
     try {
-        // Convert to grayscale
-        Imgproc.cvtColor(imageMat, BWmat, Imgproc.COLOR_BGR2GRAY)
+        // 1. Ensure single-channel input
+        when (imageMat.channels()) {
+            1 -> imageMat.copyTo(grayMat)
+            3 -> Imgproc.cvtColor(imageMat, grayMat, Imgproc.COLOR_BGR2GRAY)
+            4 -> Imgproc.cvtColor(imageMat, grayMat, Imgproc.COLOR_BGRA2GRAY)
+            else -> throw IllegalArgumentException("Unsupported channel count: ${imageMat.channels()}")
+        }
 
-        // Create binary mask: white pixels (1) where brightness >= intensityThreshold
-        Imgproc.threshold(BWmat, binaryMask, intensityThreshold.toDouble(), 255.0, Imgproc.THRESH_BINARY)
+        // 2. Build lookup table (mirrors: pow(i/255.0, 10) * 255.0)
+        val tableData = ByteArray(256) { i ->
+            (Math.pow(i / 255.0, 10.0) * 255.0)
+                .coerceIn(0.0, 255.0)
+                .toInt()
+                .toByte()
+        }
+        lookupTable.put(0, 0, tableData)
 
-        // Count non-zero pixels (glare pixels)
-        val glarePixels = Core.countNonZero(binaryMask)
-        val totalPixels = imageMat.rows() * imageMat.cols()
+        // 3. Apply gamma correction via LUT
+        Core.LUT(grayMat, lookupTable, gammaCorrected)
 
-        // Calculate glare area ratio
-        val detectedGlareRatio = glarePixels.toDouble() / totalPixels
+        // 4. Apply Otsu threshold
+        Imgproc.threshold(
+            gammaCorrected, thresholded,
+            0.0, 255.0,
+            Imgproc.THRESH_BINARY + Imgproc.THRESH_OTSU
+        )
 
-        // Return true if glare ratio exceeds threshold
-        return detectedGlareRatio > glare_area_ratio
+        // 5. Glare score = fraction of white (glare) pixels
+        val whitePixels = Core.countNonZero(thresholded)
+        return whitePixels.toDouble() / thresholded.total().toDouble()
+
     } finally {
-        BWmat.release()
-        binaryMask.release()
+        lookupTable.release()
+        grayMat.release()
+        gammaCorrected.release()
+        thresholded.release()
     }
 }

@@ -31,7 +31,7 @@ class KycCompute (
     data class DocumentScore(
         val edgeScore: Int,
         val brightnessScore: Double,
-        val isGlare: Boolean,
+        val isGlare: Double,
         val readabilityScore: Int,
         val averageScore: Int,
         val corners: Int,
@@ -50,8 +50,8 @@ class KycCompute (
     suspend fun runPreliminaryChecks(image: Mat): DocumentScore = coroutineScope{
         val brightnessCheck = async { computeBrightnessScore(image) }
         val blurCheck = async { computeBlurriness(image) }
-        val cornersCheck = async { computeCorners(image) }
-        val glareCheck = async { isGlare(image, 0, 0.0) }
+        val cornersCheck = async { detectEdgesAndCountCorners(image) }
+        val glareCheck = async { isGlare(image) }
 
         val brightnessScore = brightnessCheck.await()
         val blurScore = blurCheck.await()
@@ -64,7 +64,7 @@ class KycCompute (
             isGlare = isGlare,
             readabilityScore = 0,
             averageScore = 0,
-            corners = corners,
+            corners = corners.cornerCount,
             blurScore = blurScore
         )
     }

@@ -186,7 +186,7 @@ private fun DocumentScoreOverlay(
         ScoreLine("Brightness", "%.1f".format(score.brightnessScore))
         ScoreLine("Blur", "%.1f".format(score.blurScore))
         ScoreLine("Corners", score.corners.toString())
-        ScoreLine("Glare", if (score.isGlare) "Yes" else "No")
+        ScoreLine("Glare", "%.3f".format(score.isGlare))
         ScoreLine("Readability", score.readabilityScore.toString())
         ScoreLine("Edges", score.edgeScore.toString())
     }

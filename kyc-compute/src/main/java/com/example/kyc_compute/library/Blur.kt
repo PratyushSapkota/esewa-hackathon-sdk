@@ -16,7 +16,6 @@ fun computeBlurriness(sourceImage: Mat): Double {
     Imgproc.cvtColor(sourceImage, grayImage, Imgproc.COLOR_BGR2GRAY)
 
     // 2. Apply Laplacian transformation
-    // CvType.CV_16S avoids data overflow/clipping of negative values
     Imgproc.Laplacian(grayImage, laplacianImage, CvType.CV_64F, 3, 1.0, 0.0, Core.BORDER_DEFAULT)
 
     // 3. Calculate Variance

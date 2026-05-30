@@ -70,7 +70,6 @@ fun detectFourCorneredContour(image: Mat): List<PointF>? {
         if (foundPoints != null) break
     }
 
-    image.release()
     gray.release()
     smooth.release()
     edges.release()

@@ -3,9 +3,9 @@ package com.example.kyc_compute.library
 import org.opencv.core.*
 import org.opencv.imgproc.Imgproc
 
-data class EdgeResult(val cornerCount: Int)
+internal data class EdgeResult(val cornerCount: Int)
 
-fun detectEdgesAndCountCorners(sourceMat: Mat): EdgeResult {
+internal fun detectEdgesAndCountCorners(sourceMat: Mat): EdgeResult {
     val gray = Mat()
     Imgproc.cvtColor(sourceMat, gray, Imgproc.COLOR_RGBA2GRAY)
 

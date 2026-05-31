@@ -6,7 +6,7 @@ import org.opencv.core.Mat
 import org.opencv.core.MatOfDouble
 import org.opencv.imgproc.Imgproc
 
-fun computeBlurriness(sourceImage: Mat): Double {
+internal fun computeBlurriness(sourceImage: Mat): Double {
     val grayImage = Mat()
     val laplacianImage = Mat()
     val meanMat = MatOfDouble()

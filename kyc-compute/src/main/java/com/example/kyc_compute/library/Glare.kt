@@ -5,7 +5,7 @@ import org.opencv.core.CvType
 import org.opencv.core.Mat
 import org.opencv.imgproc.Imgproc
 
-fun isGlare(imageMat: Mat): Double {
+internal fun isGlare(imageMat: Mat): Double {
     val lookupTable = Mat(1, 256, CvType.CV_8U)
     val grayMat = Mat()
     val gammaCorrected = Mat()

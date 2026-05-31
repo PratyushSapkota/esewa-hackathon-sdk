@@ -6,7 +6,7 @@ import org.opencv.core.Scalar
 import org.opencv.imgproc.Imgproc
 import java.util.ArrayList
 
-fun computeBrightnessScore(imageMat: Mat): Double {
+internal fun computeBrightnessScore(imageMat: Mat): Double {
     val lab = Mat()
     val channels = ArrayList<Mat>()
     var meanBrightness = 0.0

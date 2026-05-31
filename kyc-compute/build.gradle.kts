@@ -28,6 +28,7 @@ dependencies {
     implementation(libs.androidx.core.ktx)
     implementation(libs.material)
     implementation("org.opencv:opencv:4.13.0")
+    implementation("com.microsoft.onnxruntime:onnxruntime-android:1.26.0")
 
     val cameraxVersion = "1.4.2"
 

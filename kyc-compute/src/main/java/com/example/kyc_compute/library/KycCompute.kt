@@ -29,6 +29,8 @@ data class KycConfig(
     val sharpnessMin: Double = 6000.0,
     val glareMax: Double = 0.2,
     val boxMarginRatio: Float = 0.08f,
+    val holdDurationMillis: Long = 3_000L,
+    val jpegQuality: Int = 95,
 )
 
 data class KycResult(
@@ -78,9 +80,10 @@ class KycCompute(
         val box = result.documentBox ?: return result
         val sourceWidth = result.sourceFrameWidth.takeIf { it > 0 } ?: return result
         val sourceHeight = result.sourceFrameHeight.takeIf { it > 0 } ?: return result
+        val currentConfig = config
 
         val croppedBitmap = cropBitmap(image, box, sourceWidth, sourceHeight)
-        val uri = saveCapturedBitmap(croppedBitmap)
+        val uri = saveCapturedBitmap(croppedBitmap, currentConfig.jpegQuality)
         val updatedResult = result.copy(
             capturedFrame = croppedBitmap,
             capturedImageUri = uri,
@@ -143,14 +146,14 @@ class KycCompute(
             return result
         }
 
-        updateBestHoldResult(image, documentBox, result)
+        updateBestHoldResult(image, documentBox, result, currentConfig)
 
-        val feedback = resolveHoldFeedback(qualityFeedback)
+        val feedback = resolveHoldFeedback(qualityFeedback, currentConfig)
         onFeedback(feedback)
 
         if (feedback != Feedback.COMPLETE) return result
 
-        return (bestHoldResult ?: createCapturedResult(image, documentBox, result)).also { completed ->
+        return (bestHoldResult ?: createCapturedResult(image, documentBox, result, currentConfig)).also { completed ->
             completedResult = completed
         }
     }
@@ -194,7 +197,7 @@ class KycCompute(
         }
     }
 
-    private fun resolveHoldFeedback(qualityFeedback: Feedback): Feedback {
+    private fun resolveHoldFeedback(qualityFeedback: Feedback, config: KycConfig): Feedback {
         if (qualityFeedback != Feedback.COMPLETE) {
             resetHold()
             return qualityFeedback
@@ -205,7 +208,7 @@ class KycCompute(
             holdStartedAtMillis = now
         }
 
-        return if (now - holdStartedAtMillis >= HOLD_DURATION_MILLIS) {
+        return if (now - holdStartedAtMillis >= config.holdDurationMillis) {
             Feedback.COMPLETE
         } else {
             Feedback.HOLD
@@ -217,11 +220,11 @@ class KycCompute(
         clearBestHoldResult()
     }
 
-    private fun updateBestHoldResult(image: Mat, documentBox: DetectedBox, result: KycResult) {
+    private fun updateBestHoldResult(image: Mat, documentBox: DetectedBox, result: KycResult, config: KycConfig) {
         val currentBest = bestHoldResult
         if (currentBest != null && currentBest.sharpnessScore >= result.sharpnessScore) return
 
-        val nextBest = createCapturedResult(image, documentBox, result)
+        val nextBest = createCapturedResult(image, documentBox, result, config)
         bestHoldResult = nextBest
         currentBest?.capturedFrame?.recycle()
         currentBest?.capturedImageUri?.deleteFileUri()
@@ -296,11 +299,11 @@ class KycCompute(
         return cropped
     }
 
-    private fun createCapturedResult(image: Mat, documentBox: DetectedBox, result: KycResult): KycResult {
+    private fun createCapturedResult(image: Mat, documentBox: DetectedBox, result: KycResult, config: KycConfig): KycResult {
         val documentImage = cropDocument(image, documentBox)
         return try {
             val bitmap = captureBitmap(documentImage)
-            val uri = saveCapturedBitmap(bitmap)
+            val uri = saveCapturedBitmap(bitmap, config.jpegQuality)
             result.copy(
                 capturedFrame = bitmap,
                 capturedImageUri = uri,
@@ -332,11 +335,11 @@ class KycCompute(
         return bitmap
     }
 
-    private fun saveCapturedBitmap(bitmap: Bitmap): Uri {
+    private fun saveCapturedBitmap(bitmap: Bitmap, jpegQuality: Int): Uri {
         val directory = File(appContext.cacheDir, CAPTURE_DIRECTORY).apply { mkdirs() }
         val file = File(directory, "document_${System.currentTimeMillis()}.jpg")
         FileOutputStream(file).use { output ->
-            bitmap.compress(Bitmap.CompressFormat.JPEG, JPEG_QUALITY, output)
+            bitmap.compress(Bitmap.CompressFormat.JPEG, jpegQuality, output)
         }
         return Uri.fromFile(file)
     }
@@ -391,9 +394,7 @@ class KycCompute(
     )
 
     private companion object {
-        const val HOLD_DURATION_MILLIS = 3_000L
         const val CAPTURE_DIRECTORY = "kyc_compute_capture"
-        const val JPEG_QUALITY = 95
 
         @Volatile
         private var isOpenCvLoaded = false

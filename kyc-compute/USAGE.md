@@ -102,6 +102,8 @@ kycCompute.setConfig(
         sharpnessMin = 15000.0,
         glareMax = 0.3,
         boxMarginRatio = 0.08f,
+        holdDurationMillis = 3_000L,
+        jpegQuality = 95,
     )
 )
 ```
@@ -113,6 +115,8 @@ Fields:
 - `sharpnessMin`: Minimum allowed sharpness score. If below this value, feedback is `BLUR`.
 - `glareMax`: Maximum allowed glare score.
 - `boxMarginRatio`: Required spacing between detected box and frame edge. `0.08f` means 8% margin.
+- `holdDurationMillis`: Time the document must remain valid before capture completes.
+- `jpegQuality`: JPEG compression quality for saved captured images.
 
 ### High-Quality Still Input
 

@@ -103,6 +103,8 @@ data class KycConfig(
     val sharpnessMin: Double = 6000.0,
     val glareMax: Double = 0.2,
     val boxMarginRatio: Float = 0.08f,
+    val holdDurationMillis: Long = 3_000L,
+    val jpegQuality: Int = 95,
 )
 ```
 
@@ -116,6 +118,8 @@ kycCompute.setConfig(
         sharpnessMin = 6000.0,
         glareMax = 0.2,
         boxMarginRatio = 0.08f,
+        holdDurationMillis = 3_000L,
+        jpegQuality = 95,
     )
 )
 ```
